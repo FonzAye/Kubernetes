@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-exporter
+  labels:
+    app: mongodb-exporter
+spec:
+  replicas: {{ .Values.metrics.Mongodb_exporter.mongodbExporter.replicas }}
+  selector:
+    matchLabels:
+      app: mongodb-exporter
+  template:
+    metadata:
+      labels:
+        app: mongodb-exporter
+    spec:
+      containers:
+        - name: mongodb-exporter
+          image: {{ .Values.metrics.Mongodb_exporter.mongodbExporter.image }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.metrics.Mongodb_exporter.mongodbExporter.port }}
+              protocol: TCP
+          args:
+            {{- toYaml .Values.metrics.Mongodb_exporter.mongodbExporter.args | nindent 12 }}
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mdbExporterUri
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mdbExporterUsername
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mdbExporterPassword

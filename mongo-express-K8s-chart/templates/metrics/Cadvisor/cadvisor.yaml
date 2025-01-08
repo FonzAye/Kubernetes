@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cadvisor
+  labels:
+    k8s-app: cadvisor-monitoring
+spec:
+  selector:
+    matchLabels:
+      name: cadvisor
+  template:
+    metadata:
+      labels:
+        name: cadvisor
+    spec:
+      tolerations:
+      {{- toYaml .Values.metrics.Cadvisor.cadvisor.tolerations | nindent 8 }}
+      containers:
+      - name: cadvisor
+        image: {{ .Values.metrics.Cadvisor.cadvisor.image }}
+        securityContext:
+          privileged: true # Ensures the container has privileged access
+        volumeMounts:
+        - name: rootfs
+          mountPath: /rootfs
+          readOnly: true
+        - name: var-run
+          mountPath: /var/run
+          readOnly: false
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        - name: docker
+          mountPath: /var/lib/docker
+          readOnly: true
+        ports:
+          - name: http
+            containerPort: {{ .Values.metrics.Cadvisor.cadvisor.port }}
+            protocol: TCP
+        args:
+          {{- toYaml .Values.metrics.Cadvisor.cadvisor.args | nindent 12 }}
+      terminationGracePeriodSeconds: {{.Values.metrics.Cadvisor.cadvisor.terminationGracePeriodSeconds}}
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+      - name: var-run
+        hostPath:
+          path: /var/run
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: docker
+        hostPath:
+          path: /var/lib/docker

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cadvisor
+  labels:
+    k8s-app: cadvisor-monitoring
+spec:
+  selector:
+    name: cadvisor
+  ports:
+    - port: {{ .Values.metrics.Cadvisor.cadvisor.port }}        # Service port
+      targetPort: {{ .Values.metrics.Cadvisor.cadvisor.port }}  # Port on the cAdvisor container
+      protocol: TCP
+  type: LoadBalancer       # Service type (can be ClusterIP, NodePort, or LoadBalancer)

@@ -1,0 +1,57 @@
+database:
+  # secret:
+  #   mongoSecret:
+  #     mongo-root-username: root
+  #     mongo-root-password: example
+  #     mongo-uri: mongodb://mongo-0.mongo:27017
+  
+  mongo:
+    replicas: 1
+    image: mongo
+    port: 27017
+    rootUsername: root
+    rootPassword: example
+
+  mongoExpress:
+    replicas: 1
+    image: mongo-express:1.0.2-18
+    port: 8081
+    mongodbServer: mongo-0.mongo.default.svc.cluster.local
+    basicAuth: false
+
+metrics:
+  Cadvisor:
+    cadvisor:
+      tolerations: 
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      image: gcr.io/cadvisor/cadvisor:latest
+      port: 8080
+      args:
+        - --profiling
+        - --housekeeping_interval=15s
+      terminationGracePeriodSeconds: 30
+  
+  Prometheus:
+    prometheus:
+      replicas: 1
+      image: prom/prometheus:v3.0.1
+      args:
+        - --config.file=/etc/prometheus/prometheus.yml
+      port: 9090
+
+  Mongodb_exporter:
+    mongodbExporter:
+      replicas: 1
+      image: percona/mongodb_exporter:0.40
+      port: 9216
+      args:
+        - --collect-all
+        - --collector.profile-time-ts=15
+      mongodbUri: mongodb://metrics:example@mongo-0.mongo:27017/admin
+
+  Grafana:
+    grafana:
+      replicas: 1
+      image: grafana/grafana:latest
+      port: 3000

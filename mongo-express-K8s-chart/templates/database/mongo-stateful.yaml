@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: "mongo"
+  replicas: {{ .Values.database.mongo.replicas }}
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: {{ .Values.database.mongo.image }}
+          ports:
+            - containerPort: {{ .Values.database.mongo.port }}
+          resources: {}
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mongo-root-username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mongo-root-password
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+            - name: mongo-init-script
+              mountPath: /docker-entrypoint-initdb.d
+              # subPath: init-mongo.js
+      volumes:
+        - name: mongo-init-script
+          configMap:
+              name: mongo-init-script
+  volumeClaimTemplates: # The volumeClaimTemplates section ensures that each MongoDB pod gets its own Persistent Volume (PV).
+    - metadata:
+        name: mongo-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi

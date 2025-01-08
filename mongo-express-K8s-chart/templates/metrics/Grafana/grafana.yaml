@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  replicas: {{ .Values.metrics.Grafana.grafana.replicas }}
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: {{ .Values.metrics.Grafana.grafana.image }}
+          ports:
+            - containerPort: {{ .Values.metrics.Grafana.grafana.port }}
+          env: # Environment variables for admin credentials
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: grafana-root-username
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: grafana-root-password
+          volumeMounts: # Mount configuration and dashboards directories
+            - name: grafana-config
+              mountPath: /etc/grafana/provisioning/datasources/datasource.yaml
+              subPath: datasource.yaml
+            - name: grafana-config
+              mountPath: etc/grafana/provisioning/dashboards/dashboards.yaml
+              subPath: dashboards.yaml # Add specific file
+            - name: grafana-dashboards
+              mountPath: /var/lib/grafana/dashboards
+      volumes: # Define volumes for configuration files and dashboards
+        - name: grafana-config
+          configMap:
+            name: grafana-config
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboards

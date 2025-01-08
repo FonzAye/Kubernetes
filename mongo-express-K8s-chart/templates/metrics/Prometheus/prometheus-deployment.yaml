@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  replicas: {{ .Values.metrics.Prometheus.prometheus.replicas }}
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: {{ .Values.metrics.Prometheus.prometheus.image }}
+          args: {{- toYaml .Values.metrics.Prometheus.prometheus.args | nindent 12 }}
+          ports:
+            - containerPort: {{ .Values.metrics.Prometheus.prometheus.port }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/prometheus
+      volumes:
+        - name: config-volume
+          configMap:
+            name: prometheus-config
